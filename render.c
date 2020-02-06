@@ -158,8 +158,12 @@ output_render(struct cg_output *output, pixman_region32_t *damage)
 	}
 
 #ifdef DEBUG
-	if (server->debug_damage_tracking) {
+	if (server->debug_damage == DAMAGE_HIGHLIGHT) {
 		wlr_renderer_clear(renderer, (float[]){1.0f, 0.0f, 0.0f, 1.0f});
+	} else if (server->debug_damage == DAMAGE_RERENDER) {
+		int width, height;
+		wlr_output_transformed_resolution(wlr_output, &width, &height);
+		pixman_region32_union_rect(damage, damage, 0, 0, width, height);
 	}
 #endif
 
@@ -201,7 +205,7 @@ output_render(struct cg_output *output, pixman_region32_t *damage)
 	wlr_region_transform(&frame_damage, &output->damage->current, transform, output_width, output_height);
 
 #ifdef DEBUG
-	if (server->debug_damage_tracking) {
+	if (server->debug_damage == DAMAGE_HIGHLIGHT) {
 		pixman_region32_union_rect(&frame_damage, &frame_damage, 0, 0, output_width, output_height);
 	}
 #endif

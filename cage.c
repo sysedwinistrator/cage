@@ -104,6 +104,21 @@ handle_signal(int signal, void *data)
 	}
 }
 
+#ifdef DEBUG
+static enum debug_damage
+enable_debug_flag(const char *flag)
+{
+	if (strcmp(flag, "highlight") == 0) {
+		return DAMAGE_HIGHLIGHT;
+	} else if (strcmp(flag, "rerender") == 0) {
+		return DAMAGE_RERENDER;
+	} else {
+		wlr_log(WLR_ERROR, "Unknown debug flag: %s", flag);
+		return DAMAGE_DEFAULT;
+	}
+}
+#endif
+
 static void
 usage(FILE *file, const char *cage)
 {
@@ -113,6 +128,7 @@ usage(FILE *file, const char *cage)
 		" -r\t Rotate the output 90 degrees clockwise, specify up to three times\n"
 #ifdef DEBUG
 		" -D\t Turn on damage tracking debugging\n"
+		"   \t Use highlight to highlight damaged regions, or rerender to render the entire output for any damage\n"
 #endif
 		" -h\t Display this help message\n"
 		" -v\t Show the version number and exit\n"
@@ -126,7 +142,7 @@ parse_args(struct cg_server *server, int argc, char *argv[])
 {
 	int c;
 #ifdef DEBUG
-	while ((c = getopt(argc, argv, "drDhv")) != -1) {
+	while ((c = getopt(argc, argv, "drD:hv")) != -1) {
 #else
 	while ((c = getopt(argc, argv, "drhv")) != -1) {
 #endif
@@ -142,7 +158,7 @@ parse_args(struct cg_server *server, int argc, char *argv[])
 			break;
 #ifdef DEBUG
 		case 'D':
-			server->debug_damage_tracking = true;
+			server->debug_damage = enable_debug_flag(optarg);
 			break;
 #endif
 		case 'h':

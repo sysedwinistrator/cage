@@ -17,6 +17,19 @@
 #include "seat.h"
 #include "view.h"
 
+#ifdef DEBUG
+enum debug_damage {
+	/** Default behavior: damage tracking without any highlighting. */
+	DAMAGE_DEFAULT,
+
+	/** Highlight regions that are being damaged. */
+	DAMAGE_HIGHLIGHT,
+
+	/** Render the entire output when any damage occurs. */
+	DAMAGE_RERENDER,
+};
+#endif
+
 struct cg_server {
 	struct wl_display *wl_display;
 	struct wlr_backend *backend;
@@ -41,7 +54,7 @@ struct cg_server {
 	bool xdg_decoration;
 	enum wl_output_transform output_transform;
 #ifdef DEBUG
-	bool debug_damage_tracking;
+	enum debug_damage debug_damage;
 #endif
 };
 
