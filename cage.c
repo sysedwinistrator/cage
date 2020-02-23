@@ -26,6 +26,7 @@
 #include <wlr/types/wlr_gamma_control_v1.h>
 #include <wlr/types/wlr_idle.h>
 #include <wlr/types/wlr_idle_inhibit_v1.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_screencopy_v1.h>
 #include <wlr/types/wlr_server_decoration.h>
@@ -41,6 +42,7 @@
 #endif
 
 #include "idle_inhibit_v1.h"
+#include "layer_shell_v1.h"
 #include "output.h"
 #include "seat.h"
 #include "server.h"
@@ -387,6 +389,10 @@ main(int argc, char *argv[])
 	wlr_server_decoration_manager_set_default_mode(
 		server_decoration_manager, server.xdg_decoration ? WLR_SERVER_DECORATION_MANAGER_MODE_SERVER
 								 : WLR_SERVER_DECORATION_MANAGER_MODE_CLIENT);
+
+	server.layer_shell_v1 = wlr_layer_shell_v1_create(server.wl_display);
+	wl_signal_add(&server.layer_shell_v1->events.new_surface, &server.new_layer_shell_v1_surface);
+	server.new_layer_shell_v1_surface.notify = handle_layer_shell_v1_surface_new;
 
 	export_dmabuf_manager = wlr_export_dmabuf_manager_v1_create(server.wl_display);
 	if (!export_dmabuf_manager) {
