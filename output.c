@@ -424,6 +424,7 @@ handle_new_output(struct wl_listener *listener, void *data)
 	}
 	wlr_output_set_transform(wlr_output, server->output_transform);
 	wlr_output_layout_add_auto(server->output_layout, wlr_output);
+	output->usable_area = *wlr_output_layout_get_box(server->output_layout, NULL);
 
 	for (size_t i = 0; i < sizeof(output->layers) / sizeof(output->layers[0]); i++) {
 		wl_list_init(&output->layers[i]);

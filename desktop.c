@@ -27,7 +27,7 @@ view_extends_output_layout(struct cg_view *view, struct wlr_box *layout_box)
 void
 arrange_view(struct cg_view *view)
 {
-	struct wlr_box usable_area = wlr_output_layout_get_box(server->output_layout, NULL);
+	struct wlr_box *usable_area = &view->server->output->usable_area;
 
 	if (view_is_primary(view) || view_extends_output_layout(view, usable_area)) {
 		view_maximize(view, usable_area);

@@ -2,6 +2,7 @@
 #define CG_OUTPUT_H
 
 #include <wayland-server-core.h>
+#include <wlr/types/wlr_box.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
 
@@ -21,6 +22,7 @@ struct cg_output {
 	struct wlr_output *wlr_output;
 	struct wlr_output_damage *damage;
 
+	struct wlr_box usable_area;
 	struct wl_list layers[NUM_LAYERS]; // cg_layer_surface::link
 
 	struct wl_listener mode;
