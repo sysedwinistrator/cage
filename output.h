@@ -8,10 +8,20 @@
 #include "server.h"
 #include "view.h"
 
+/* There exist currently four layers:
+ * - ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND
+ * - ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM
+ * - ZWLR_LAYER_SHELL_V1_LAYER_TOP
+ * - ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY
+ */
+#define NUM_LAYERS 4
+
 struct cg_output {
 	struct cg_server *server;
 	struct wlr_output *wlr_output;
 	struct wlr_output_damage *damage;
+
+	struct wl_list layers[NUM_LAYERS]; // cg_layer_surface::link
 
 	struct wl_listener mode;
 	struct wl_listener transform;
