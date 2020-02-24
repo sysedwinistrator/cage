@@ -22,6 +22,7 @@
 #endif
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_data_device.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_matrix.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_damage.h>
@@ -194,16 +195,20 @@ scan_out_primary_view(struct cg_output *output)
 	struct cg_server *server = output->server;
 	struct wlr_output *wlr_output = output->wlr_output;
 
+	struct cg_view *view = seat_get_focus(server->seat);
+	if (!view || !view->wlr_surface) {
+		return false;
+	}
+
+	if (!wl_list_empty(&output->layers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY])) {
+		return false;
+	}
+
 	struct cg_drag_icon *drag_icon;
 	wl_list_for_each (drag_icon, &server->seat->drag_icons, link) {
 		if (drag_icon->wlr_drag_icon->mapped) {
 			return false;
 		}
-	}
-
-	struct cg_view *view = seat_get_focus(server->seat);
-	if (!view || !view->wlr_surface) {
-		return false;
 	}
 
 	size_t n_surfaces = 0;
