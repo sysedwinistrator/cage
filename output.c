@@ -408,6 +408,7 @@ handle_new_output(struct wl_listener *listener, void *data)
 	}
 
 	output->wlr_output = wlr_output;
+	wlr_output->data = output;
 	output->server = server;
 	output->damage = wlr_output_damage_create(wlr_output);
 	wl_list_insert(&server->outputs, &output->link);
