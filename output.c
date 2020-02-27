@@ -364,20 +364,15 @@ output_destroy(struct cg_output *output)
 	wl_list_remove(&output->transform.link);
 	wl_list_remove(&output->damage_frame.link);
 	wl_list_remove(&output->damage_destroy.link);
-	wl_list_remove(&output->link);
 
 	wlr_output_layout_remove(server->output_layout, output->wlr_output);
 
-	struct cg_view *view;
-	wl_list_for_each (view, &output->server->views, link) {
-		view_position(view);
-	}
-
 	free(output);
+	server->output = NULL;
 
-	if (wl_list_empty(&server->outputs)) {
-		wl_display_terminate(server->wl_display);
-	}
+	/* Since there is no use in continuing without our (single)
+	 * output, terminate. */
+	wl_display_terminate(server->wl_display);
 }
 
 static void
@@ -411,7 +406,6 @@ handle_new_output(struct wl_listener *listener, void *data)
 	wlr_output->data = output;
 	output->server = server;
 	output->damage = wlr_output_damage_create(wlr_output);
-	wl_list_insert(&server->outputs, &output->link);
 
 	output->mode.notify = handle_output_mode;
 	wl_signal_add(&wlr_output->events.mode, &output->mode);
@@ -445,6 +439,10 @@ handle_new_output(struct wl_listener *listener, void *data)
 	wlr_output_commit(wlr_output);
 
 	wlr_output_damage_add_whole(output->damage);
+
+	/* Disconnect the signal now, because we only use one static output. */
+	wl_list_remove(&server->new_output.link);
+	server->output = output;
 }
 
 void

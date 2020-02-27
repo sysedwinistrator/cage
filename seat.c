@@ -132,14 +132,12 @@ map_input_device_to_output(struct cg_seat *seat, struct wlr_input_device *device
 		return;
 	}
 
-	struct cg_output *output;
-	wl_list_for_each (output, &seat->server->outputs, link) {
-		if (strcmp(device->output_name, output->wlr_output->name) == 0) {
-			wlr_log(WLR_INFO, "Mapping input device %s to output device %s\n", device->name,
-				output->wlr_output->name);
-			wlr_cursor_map_input_to_output(seat->cursor, device, output->wlr_output);
-			return;
-		}
+	struct cg_output *output = seat->server->output;
+	if (strcmp(device->output_name, output->wlr_output->name) == 0) {
+		wlr_log(WLR_INFO, "Mapping input device %s to output device %s\n", device->name,
+			output->wlr_output->name);
+		wlr_cursor_map_input_to_output(seat->cursor, device, output->wlr_output);
+		return;
 	}
 
 	wlr_log(WLR_INFO, "Couldn't map input device %s to an output\n", device->name);
@@ -598,10 +596,8 @@ handle_cursor_motion(struct wl_listener *listener, void *data)
 static void
 drag_icon_damage(struct cg_drag_icon *drag_icon)
 {
-	struct cg_output *output;
-	wl_list_for_each (output, &drag_icon->seat->server->outputs, link) {
-		output_damage_surface(output, drag_icon->wlr_drag_icon->surface, drag_icon->lx, drag_icon->ly, true);
-	}
+	struct cg_output *output = drag_icon->seat->server->output;
+	output_damage_surface(output, drag_icon->wlr_drag_icon->surface, drag_icon->lx, drag_icon->ly, true);
 }
 
 static void
@@ -866,10 +862,7 @@ seat_set_focus(struct cg_seat *seat, struct cg_view *view)
 
 	view_activate(view, true);
 	char *title = view_get_title(view);
-	struct cg_output *output;
-	wl_list_for_each (output, &server->outputs, link) {
-		output_set_window_title(output, title);
-	}
+	output_set_window_title(server->output, title);
 	free(title);
 
 	struct wlr_keyboard *keyboard = wlr_seat_get_keyboard(wlr_seat);

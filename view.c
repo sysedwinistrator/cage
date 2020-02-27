@@ -139,19 +139,15 @@ view_is_transient_for(struct cg_view *child, struct cg_view *parent)
 void
 view_damage_part(struct cg_view *view)
 {
-	struct cg_output *output;
-	wl_list_for_each (output, &view->server->outputs, link) {
-		output_damage_surface(output, view->wlr_surface, view->lx, view->ly, false);
-	}
+	struct cg_output *output = view->server->output;
+	output_damage_surface(output, view->wlr_surface, view->lx, view->ly, false);
 }
 
 void
 view_damage_whole(struct cg_view *view)
 {
-	struct cg_output *output;
-	wl_list_for_each (output, &view->server->outputs, link) {
-		output_damage_surface(output, view->wlr_surface, view->lx, view->ly, true);
-	}
+	struct cg_output *output = view->server->output;
+	output_damage_surface(output, view->wlr_surface, view->lx, view->ly, true);
 }
 
 void
