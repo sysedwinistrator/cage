@@ -33,6 +33,7 @@
 #include <wlr/util/region.h>
 
 #include "desktop.h"
+#include "layer_shell_v1.h"
 #include "output.h"
 #include "render.h"
 #include "seat.h"
@@ -107,6 +108,41 @@ output_surface_for_each_surface(struct cg_output *output, struct wlr_surface *su
 	wlr_surface_for_each_surface(surface, output_for_each_surface_iterator, &data);
 }
 
+bool
+output_has_opaque_overlay_layer_surface(struct cg_output *output)
+{
+	struct cg_server *server = output->server;
+
+	struct wlr_layer_surface_v1 *wlr_layer_surface_v1;
+	wl_list_for_each (wlr_layer_surface_v1, &server->layer_shell_v1->surfaces, link) {
+		if (wlr_layer_surface_v1->output != output->wlr_output ||
+		    wlr_layer_surface_v1->current.layer != ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY) {
+			continue;
+		}
+		struct wlr_surface *wlr_surface = wlr_layer_surface_v1->surface;
+		struct cg_layer_surface *cg_layer_surface = layer_from_wlr_layer_surface_v1(wlr_layer_surface_v1);
+
+		pixman_box32_t output_box = {
+			.x2 = output->wlr_output->width,
+			.y2 = output->wlr_output->height,
+		};
+
+		pixman_region32_t surface_opaque_box;
+		pixman_region32_init(&surface_opaque_box);
+		pixman_region32_copy(&surface_opaque_box, &wlr_surface->opaque_region);
+		pixman_region32_translate(&surface_opaque_box, cg_layer_surface->geometry.x,
+					  cg_layer_surface->geometry.y);
+		pixman_region_overlap_t contains = pixman_region32_contains_rectangle(&surface_opaque_box, &output_box);
+		pixman_region32_fini(&surface_opaque_box);
+
+		if (contains == PIXMAN_REGION_IN) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void
 output_view_for_each_surface(struct cg_output *output, struct cg_view *view, cg_surface_iterator_func_t iterator,
 			     void *user_data)
@@ -152,6 +188,19 @@ output_drag_icons_for_each_surface(struct cg_output *output, struct wl_list *dra
 			output_surface_for_each_surface(output, drag_icon->wlr_drag_icon->surface, ox, oy, iterator,
 							user_data);
 		}
+	}
+}
+
+void
+output_layer_for_each_surface(struct cg_output *output, struct wl_list *layer_surfaces,
+			      cg_surface_iterator_func_t iterator, void *user_data)
+{
+	struct cg_layer_surface *layer_surface;
+	wl_list_for_each (layer_surface, layer_surfaces, link) {
+		struct wlr_layer_surface_v1 *wlr_layer_surface_v1 = layer_surface->layer_surface;
+		output_surface_for_each_surface(output, wlr_layer_surface_v1->surface, layer_surface->geometry.x,
+						layer_surface->geometry.y, iterator, user_data);
+		// TODO: popups
 	}
 }
 

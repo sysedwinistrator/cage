@@ -160,3 +160,9 @@ handle_layer_shell_v1_surface_new(struct wl_listener *listener, void *data)
 
 	wl_list_insert(&output->layers[layer_surface->client_pending.layer], &cg_layer->link);
 }
+
+struct cg_layer_surface *
+layer_from_wlr_layer_surface_v1(struct wlr_layer_surface_v1 *layer_surface)
+{
+	return layer_surface->data;
+}

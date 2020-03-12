@@ -12,6 +12,7 @@
 #include <wlr/render/wlr_renderer.h>
 #include <wlr/types/wlr_box.h>
 #include <wlr/types/wlr_matrix.h>
+#include <wlr/types/wlr_layer_shell_v1.h>
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_output_layout.h>
 #include <wlr/types/wlr_surface.h>
@@ -138,6 +139,15 @@ render_view_popups(struct cg_view *view, struct cg_output *output, pixman_region
 	output_view_for_each_popup(output, view, render_popup_iterator, &data);
 }
 
+static void
+render_layer(struct cg_output *output, pixman_region32_t *damage, struct wl_list *layer_surfaces)
+{
+	struct render_data data = {
+		.damage = damage,
+	};
+	output_layer_for_each_surface(output, layer_surfaces, render_surface_iterator, &data);
+}
+
 void
 output_render(struct cg_output *output, pixman_region32_t *damage)
 {
@@ -163,6 +173,10 @@ output_render(struct cg_output *output, pixman_region32_t *damage)
 	}
 #endif
 
+	if (output_has_opaque_overlay_layer_surface(output)) {
+		goto render_overlay;
+	}
+
 	float color[4] = {0.0f, 0.0f, 0.0f, 1.0f};
 	int nrects;
 	pixman_box32_t *rects = pixman_region32_rectangles(damage, &nrects);
@@ -171,17 +185,24 @@ output_render(struct cg_output *output, pixman_region32_t *damage)
 		wlr_renderer_clear(renderer, color);
 	}
 
+	render_layer(output, damage, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND]);
+	render_layer(output, damage, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM]);
+
 	// TODO: render only top view, possibly use focused view for this, see #35.
 	struct cg_view *view;
 	wl_list_for_each_reverse (view, &server->views, link) {
 		render_view_toplevels(view, output, damage);
 	}
 
+	render_layer(output, damage, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_TOP]);
+
 	struct cg_view *focused_view = seat_get_focus(server->seat);
 	if (focused_view) {
 		render_view_popups(focused_view, output, damage);
 	}
 
+render_overlay:
+	render_layer(output, damage, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY]);
 	render_drag_icons(output, damage, &server->seat->drag_icons);
 
 renderer_end:
