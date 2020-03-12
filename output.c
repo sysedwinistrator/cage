@@ -32,6 +32,7 @@
 #include <wlr/util/log.h>
 #include <wlr/util/region.h>
 
+#include "desktop.h"
 #include "output.h"
 #include "render.h"
 #include "seat.h"
@@ -338,10 +339,7 @@ handle_output_transform(struct wl_listener *listener, void *data)
 		return;
 	}
 
-	struct cg_view *view;
-	wl_list_for_each (view, &output->server->views, link) {
-		view_position(view);
-	}
+	arrange_desktop(output);
 }
 
 static void
@@ -353,10 +351,7 @@ handle_output_mode(struct wl_listener *listener, void *data)
 		return;
 	}
 
-	struct cg_view *view;
-	wl_list_for_each (view, &output->server->views, link) {
-		view_position(view);
-	}
+	arrange_desktop(output);
 }
 
 static void
@@ -434,10 +429,7 @@ handle_new_output(struct wl_listener *listener, void *data)
 		wl_list_init(&output->layers[i]);
 	}
 
-	struct cg_view *view;
-	wl_list_for_each (view, &output->server->views, link) {
-		view_position(view);
-	}
+	arrange_desktop(output);
 
 	if (wlr_xcursor_manager_load(server->seat->xcursor_manager, wlr_output->scale)) {
 		wlr_log(WLR_ERROR, "Cannot load XCursor theme for output '%s' with scale %f", wlr_output->name,

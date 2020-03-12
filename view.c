@@ -13,9 +13,9 @@
 #include <string.h>
 #include <wayland-server-core.h>
 #include <wlr/types/wlr_box.h>
-#include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_surface.h>
 
+#include "desktop.h"
 #include "output.h"
 #include "seat.h"
 #include "server.h"
@@ -156,16 +156,7 @@ view_activate(struct cg_view *view, bool activate)
 	view->impl->activate(view, activate);
 }
 
-static bool
-view_extends_output_layout(struct cg_view *view, struct wlr_box *layout_box)
-{
-	int width, height;
-	view->impl->get_geometry(view, &width, &height);
-
-	return (layout_box->height < height || layout_box->width < width);
-}
-
-static void
+void
 view_maximize(struct cg_view *view, struct wlr_box *layout_box)
 {
 	view->lx = layout_box->x;
@@ -173,7 +164,7 @@ view_maximize(struct cg_view *view, struct wlr_box *layout_box)
 	view->impl->maximize(view, layout_box->width, layout_box->height);
 }
 
-static void
+void
 view_center(struct cg_view *view, struct wlr_box *layout_box)
 {
 	int width, height;
@@ -181,18 +172,6 @@ view_center(struct cg_view *view, struct wlr_box *layout_box)
 
 	view->lx = (layout_box->width - width) / 2;
 	view->ly = (layout_box->height - height) / 2;
-}
-
-void
-view_position(struct cg_view *view)
-{
-	struct wlr_box *layout_box = wlr_output_layout_get_box(view->server->output_layout, NULL);
-
-	if (view_is_primary(view) || view_extends_output_layout(view, layout_box)) {
-		view_maximize(view, layout_box);
-	} else {
-		view_center(view, layout_box);
-	}
 }
 
 void
@@ -244,7 +223,7 @@ view_map(struct cg_view *view, struct wlr_surface *surface)
 	if (view->type != CAGE_XWAYLAND_VIEW || xwayland_view_should_manage(view))
 #endif
 	{
-		view_position(view);
+		arrange_view(view);
 	}
 
 	wl_list_insert(&view->server->views, &view->link);

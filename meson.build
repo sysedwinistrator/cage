@@ -74,6 +74,7 @@ conf_data.set_quoted('CAGE_VERSION', version)
 
 cage_sources = [
   'cage.c',
+  'desktop.c',
   'idle_inhibit_v1.c',
   'layer_shell_v1.c',
   'output.c',
@@ -88,6 +89,7 @@ cage_headers = [
   configure_file(input: 'config.h.in',
 		 output: 'config.h',
 		 configuration: conf_data),
+  'desktop.h',
   'idle_inhibit_v1.h',
   'layer_shell_v1.h',
   'output.h',
