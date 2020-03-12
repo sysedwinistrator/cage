@@ -158,11 +158,23 @@ output_drag_icons_for_each_surface(struct cg_output *output, struct wl_list *dra
 static void
 output_for_each_surface(struct cg_output *output, cg_surface_iterator_func_t iterator, void *user_data)
 {
+	if (output_has_opaque_overlay_layer_surface(output)) {
+		goto overlay;
+	}
+
+	output_layer_for_each_surface(output, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_BACKGROUND], iterator,
+				      user_data);
+	output_layer_for_each_surface(output, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_BOTTOM], iterator, user_data);
+
 	struct cg_view *view;
 	wl_list_for_each_reverse (view, &output->server->views, link) {
 		output_view_for_each_surface(output, view, iterator, user_data);
 	}
 
+	output_layer_for_each_surface(output, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_TOP], iterator, user_data);
+
+overlay:
+	output_layer_for_each_surface(output, &output->layers[ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY], iterator, user_data);
 	output_drag_icons_for_each_surface(output, &output->server->seat->drag_icons, iterator, user_data);
 }
 
