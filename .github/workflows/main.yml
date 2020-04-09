@@ -1,0 +1,51 @@
+name: Alpine
+on:
+  push:
+    branches: [ master, github-actions ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        CC: [ gcc, clang ]
+        OS: [ alpine/edge ] # , archlinux/base, auchida/freebsd ]
+    env:
+      CC: ${{ matrix.CC }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        if: "matrix.OS == 'alpine'"
+        run: pkg add {eudev,mesa,libinput,libxkbcommon,pixman,wayland}-dev meson wayland-protocols xorg-server-xwayland
+#       - name: Install dependencies
+#         if: "matrix.OS == 'archlinux'"
+#         run: pacman -S 
+#       - name: Install dependencies
+#         if: "matrix.OS == 'freebsd'"
+#         run: pkg install
+
+      # Install wlroots, which is required by Cage. Note that we compile a tagged
+      # version instead of master, to avoid any breaking changes in wlroots.
+      - name: Install wlroots
+        run: |
+          git clone https://github.com/swaywm/wlroots
+          cd wlroots
+          git checkout 0.10.0
+          meson --prefix=/usr build -Dexamples=false
+          ninja -C build
+          sudo ninja -C build install
+      - name: Compile Cage
+        run: |
+          cd cage
+          meson build --werror -Dxwayland=true
+          ninja -C build
+          rm -rf build
+      - name: Compile Cage (no XWayland)
+        run: |
+          cd cage
+          meson build --werror -Dxwayland=false
+          ninja -C build
+          rm -rf build
+    runs-on: ubuntu-latest
+    container: ${{ matrix.OS }}
